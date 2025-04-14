@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Log In | PeerSync</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 20px 40px;
+      background-color: rgba(44, 62, 80, 0.8);
+      position: fixed;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(5px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      color: #ffffff;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    main {
+      padding-top: 120px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .form-container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .form-container h2 {
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #2c3e50;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .login-btn:hover {
+      background-color: #3498db;
+    }
+  </style>
+</head>
+<body>
+
+  <script src="main.js"></script>
+
+  <header>
+    <h1>PeerSync</h1>
+    <div class="nav-buttons">
+      <!-- Optional back/home button if needed -->
+    </div>
+  </header>
+
+  <main>
+    <div class="form-container">
+      <h2>Login to Continue</h2>
+      <input type="email" class="login-input" placeholder="Enter your email" />
+      <button class="login-btn">Login</button>
+    </div>
+  </main>
+
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+</body>
+</html>
