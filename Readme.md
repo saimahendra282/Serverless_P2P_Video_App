@@ -154,3 +154,6 @@ EmailJS: For login link (from frontend)
 
 🧰 Key AWS Services Summary
 <table> <tr><th>Service</th><th>Purpose</th></tr> <tr><td>S3</td><td>Frontend hosting</td></tr> <tr><td>CloudFront</td><td>HTTPS & CDN</td></tr> <tr><td>DynamoDB</td><td>User & friend data</td></tr> <tr><td>Lambda</td><td>API logic</td></tr> <tr><td>API Gateway</td><td>HTTP routing</td></tr> <tr><td>EC2</td><td>WebSocket signaling</td></tr> <tr><td>Cloudflare</td><td>Tunneling & HTTPS</td></tr> <tr><td>CloudWatch</td><td>Logs and monitoring</td></tr> </table>
+<br>
+<h1>Access the backend repo here : https://github.com/saimahendra282/solution_architech_py_microservice.git</h1>
+<h1> I WILL DELETE ALL THE RESOURCES CREATED ON MAY 3rd and until that date you can use this <a href="You can use it "> link</a> For actual working web</h1>
