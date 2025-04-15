@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Respond to Friend Request</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2rem;
+      background: #f9f9f9;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .info {
+      margin: 1rem 0;
+      font-size: 1.1rem;
+      color: #555;
+    }
+
+    .btn-group {
+      margin-top: 1.5rem;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 0 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .accept {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .reject {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .message {
+      margin-top: 2rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>👋 Friend Request</h1>
+  <p class="info" id="requestInfo">Loading request details...</p>
+
+  <div class="btn-group">
+    <button class="accept" onclick="respond('accept')">✅ Accept</button>
+    <button class="reject" onclick="respond('reject')">❌ Reject</button>
+  </div>
+
+  <p class="message" id="resultMsg"></p>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const fromEmail = params.get("from");
+    const toEmail = params.get("to");
+
+    const requestInfo = document.getElementById("requestInfo");
+    const resultMsg = document.getElementById("resultMsg");
+
+    if (fromEmail && toEmail) {
+      requestInfo.textContent = `User ${fromEmail} wants to connect with you (${toEmail}).`;
+    } else {
+      requestInfo.textContent = "❌ Invalid or incomplete request.";
+      document.querySelector(".btn-group").style.display = "none";
+    }
+
+    async function respond(action) {
+      try {
+        const res = await fetch("api-gateway-url/respond-friend-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fromEmail, toEmail, action })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          resultMsg.textContent = `✅ ${data.message}`;
+        } else {
+          resultMsg.textContent = `❌ ${data.error || "Something went wrong."}`;
+        }
+
+        document.querySelector(".btn-group").style.display = "none";
+      } catch (err) {
+        resultMsg.textContent = "❌ Error sending your response.";
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
