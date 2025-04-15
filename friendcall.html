@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Friend Call | PeerConnect</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background:rgb(62, 61, 61);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .call-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      background: rgb(62, 61, 61);
+    }
+
+    .video-container {
+      position: absolute;
+    }
+
+    .full-screen {
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .small-corner {
+      width: 180px;
+      height: 130px;
+      top: calc(100% - 190px);
+      left: calc(100% - 200px);
+      z-index: 2;
+      cursor: move;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+      background: black;
+    }
+
+    .name-label {
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      z-index: 3;
+    }
+
+    .controls {
+      position: absolute;
+      top: 20px; /* moved to top */
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1rem;
+      z-index: 20;
+      background: rgba(79, 78, 78, 0.175);
+      padding: 10px 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(5px);
+    }
+
+    .controls button {
+      background: #2ec6d7;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .controls button:hover {
+      background: #218838;
+    }
+
+    #leave {
+      background: #dc3545;
+    }
+
+    #leave:hover {
+      background: #c82333;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="call-wrapper">
+    <div class="controls">
+        <button id="toggle-audio">🎙️</button>
+        <button id="toggle-video">📷</button>
+        <button id="share-screen">🖥️</button>
+        <button id="leave">🚪</button>
+      </div>
+    <div class="video-container local full-screen">
+      <video id="localVideo" autoplay muted playsinline></video>
+      <div class="name-label">You</div>
+    </div>
+    <div class="video-container remote small-corner">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <div class="name-label">Remote</div>
+    </div>
+
+     
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const roomId = params.get("room");
+  
+    const localVideo = document.getElementById("localVideo");
+    const remoteVideo = document.getElementById("remoteVideo");
+  
+    let localStream, peerConnection, ws;
+    let isAudioEnabled = true;
+    let isVideoEnabled = true;
+    let isScreenSharing = false;
+    let originalVideoTrack = null;
+    let pendingCandidates = [];
+  
+    const config = {
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    };
+  
+    // 📦 Drag & Toggle Setup
+    let isDragging = false, currentDraggable = null, offsetX, offsetY, isPotentialClick = false, startX, startY;
+  
+    function makeDraggable(element) {
+      element.addEventListener('mousedown', (e) => {
+        if (!element.classList.contains('small-corner')) return;
+        isPotentialClick = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        currentDraggable = element;
+        isDragging = true;
+        offsetX = e.clientX - element.getBoundingClientRect().left;
+        offsetY = e.clientY - element.getBoundingClientRect().top;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+    }
+  
+    function onMouseMove(e) {
+      if (!isDragging || !currentDraggable) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) isPotentialClick = false;
+      const wrapper = document.querySelector('.call-wrapper');
+      let left = e.clientX - offsetX - wrapper.offsetLeft;
+      let top = e.clientY - offsetY - wrapper.offsetTop;
+      const maxX = wrapper.clientWidth - currentDraggable.offsetWidth;
+      const maxY = wrapper.clientHeight - currentDraggable.offsetHeight;
+      currentDraggable.style.left = `${Math.min(Math.max(0, left), maxX)}px`;
+      currentDraggable.style.top = `${Math.min(Math.max(0, top), maxY)}px`;
+    }
+  
+    function onMouseUp(e) {
+      if (isPotentialClick && Math.abs(e.clientX - startX) < 5 && Math.abs(e.clientY - startY) < 5) {
+        toggleVideos();
+      }
+      isDragging = false;
+      currentDraggable = null;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    }
+  
+    function toggleVideos() {
+      const local = document.querySelector('.video-container.local');
+      const remote = document.querySelector('.video-container.remote');
+      if (local.classList.contains('full-screen')) {
+        local.classList.remove('full-screen'); local.classList.add('small-corner');
+        remote.classList.remove('small-corner'); remote.classList.add('full-screen');
+      } else {
+        remote.classList.remove('full-screen'); remote.classList.add('small-corner');
+        local.classList.remove('small-corner'); local.classList.add('full-screen');
+      }
+    }
+  
+    makeDraggable(document.querySelector('.video-container.local'));
+    makeDraggable(document.querySelector('.video-container.remote'));
+  
+    async function startCall() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localVideo.srcObject = localStream;
+        await createPeerConnection();
+  
+        ws = new WebSocket(`wss://backend-deployed-url/ws/${roomId}`);
+  
+        ws.onopen = () => {
+          console.log("✅ WebSocket connected");
+        };
+  
+        ws.onmessage = async (event) => {
+          const msg = JSON.parse(event.data);
+          try {
+            if (msg.type === "init-call") {
+              const offer = await peerConnection.createOffer();
+              await peerConnection.setLocalDescription(offer);
+              ws.send(JSON.stringify({ type: "offer", offer }));
+            } else if (msg.type === "offer") {
+              if (peerConnection.signalingState !== "stable") {
+                console.warn("⚠️ Offer collision detected. Ignoring.");
+                return;
+              }
+              await peerConnection.setRemoteDescription(new RTCSessionDescription(msg.offer));
+              const answer = await peerConnection.createAnswer();
+              await peerConnection.setLocalDescription(answer);
+              ws.send(JSON.stringify({ type: "answer", answer }));
+  
+              for (const c of pendingCandidates) {
+                await peerConnection.addIceCandidate(c);
+              }
+              pendingCandidates = [];
+            } else if (msg.type === "answer") {
+              if (peerConnection.signalingState === "have-local-offer") {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(msg.answer));
+                for (const c of pendingCandidates) {
+                  await peerConnection.addIceCandidate(c);
+                }
+                pendingCandidates = [];
+              } else {
+                console.warn("⚠️ Ignored answer. Not in 'have-local-offer' state.");
+              }
+            } else if (msg.type === "ice-candidate") {
+              const candidate = new RTCIceCandidate(msg.candidate);
+              if (peerConnection.remoteDescription && peerConnection.remoteDescription.type) {
+                await peerConnection.addIceCandidate(candidate);
+              } else {
+                pendingCandidates.push(candidate);
+              }
+            }
+          } catch (e) {
+            console.error("❌ WebSocket handling error:", e);
+          }
+        };
+      } catch (e) {
+        console.error("❌ Error starting call:", e);
+      }
+    }
+  
+    async function createPeerConnection() {
+      if (peerConnection) return;
+  
+      peerConnection = new RTCPeerConnection(config);
+      localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+  
+      peerConnection.ontrack = (event) => {
+        remoteVideo.srcObject = event.streams[0];
+      };
+  
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          ws.send(JSON.stringify({ type: "ice-candidate", candidate: event.candidate }));
+        }
+      };
+    }
+  
+    // 🎛 Controls
+    document.getElementById("toggle-audio").addEventListener("click", (e) => {
+      isAudioEnabled = !isAudioEnabled;
+      localStream.getAudioTracks().forEach(track => track.enabled = isAudioEnabled);
+      e.target.textContent = isAudioEnabled ? "🎙️" : "🔇";
+    });
+  
+    document.getElementById("toggle-video").addEventListener("click", (e) => {
+      isVideoEnabled = !isVideoEnabled;
+      localStream.getVideoTracks().forEach(track => track.enabled = isVideoEnabled);
+      e.target.textContent = isVideoEnabled ? "📷" : "📵";
+    });
+  
+    document.getElementById("share-screen").addEventListener("click", async (e) => {
+      if (!isScreenSharing) {
+        try {
+          const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          const screenTrack = screenStream.getVideoTracks()[0];
+          const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
+  
+          originalVideoTrack = localStream.getVideoTracks()[0];
+          if (sender) sender.replaceTrack(screenTrack);
+  
+          screenTrack.onended = () => {
+            if (sender && originalVideoTrack) {
+              sender.replaceTrack(originalVideoTrack);
+              isScreenSharing = false;
+              e.target.textContent = "🖥️";
+            }
+          };
+  
+          isScreenSharing = true;
+          e.target.textContent = "🛑";
+        } catch (err) {
+          alert("❌ Screen share failed.");
+          console.error(err);
+        }
+      } else {
+        const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
+        if (sender && originalVideoTrack) {
+          sender.replaceTrack(originalVideoTrack);
+          isScreenSharing = false;
+          e.target.textContent = "🖥️";
+        }
+      }
+    });
+  
+    document.getElementById("leave").addEventListener("click", () => {
+      if (peerConnection) peerConnection.close();
+      if (ws) ws.close();
+      window.location.href = "home.html";
+    });
+  
+    // 🚀 Start
+    startCall();
+  </script>
+  
+</body>
+</html>
