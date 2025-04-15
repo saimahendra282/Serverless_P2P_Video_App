@@ -157,3 +157,4 @@ EmailJS: For login link (from frontend)
 <br>
 <h1>Access the backend repo here : https://github.com/saimahendra282/solution_architech_py_microservice.git</h1>
 <h1> I WILL DELETE ALL THE RESOURCES CREATED ON MAY 3rd and until that date you can use this <a href="You can use it "> link</a> For actual working web</h1>
+<h4>Thanks for reading till the end , i will write the medium aritcle about the process soon.. so stay tuned..</h4>
