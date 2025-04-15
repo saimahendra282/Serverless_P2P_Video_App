@@ -1,0 +1,413 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PeerSync</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <style>
+      /* Reset default margins and padding */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    background-color: #f4f4f4;
+    overflow-y: auto; /* Allows scrolling if needed */
+    -ms-overflow-style: none; /* For Internet Explorer and Edge */
+    scrollbar-width: none; /* For Firefox */
+  }
+
+  body::-webkit-scrollbar {
+    display: none; /* Hides scrollbar for Chrome, Safari, and Opera */
+  }
+
+  /* Header Styles */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 20px 40px;
+    background-color: rgba(44, 62, 80, 0.8); /* Semi-transparent header */
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(5px); /* Optional: Adds a blur effect for modern look */
+  }
+  .card {
+  color: #ffffff;
+  width: 190px;
+  height: 254px;
+  position: relative;
+  outline: 6px solid #f5f5f5;
+  border-radius: 8px;
+  line-height: 150%;
+  padding: 16px;
+  background: linear-gradient(to top, #ff930f, #ffcc33);
+  background-blend-mode: multiply;
+  transition: background-color 1s ease-in-out;
+  overflow: hidden;
+}
+.card1 {
+  background-image: url('saibeach.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.card2 {
+  background-image: url('');
+  background-size: cover;
+  background-position: center;
+}
+
+.card3 {
+  background-image: url('sanjay.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+.card-front {
+  bottom: 16px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  transition: transform 1s cubic-bezier(0.785, 0.135, 0.150, 0.860);
+}
+
+.card-back {
+  transform: translateX(120%);
+  transition: transform 1s cubic-bezier(0.785, 0.135, 0.150, 0.860);
+  position: absolute;
+  top: 16px;
+  left: 0;
+  padding: 0 10px;
+}
+
+.title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #f4f4f4;
+}
+
+.title::after {
+  content: "";
+  display: block;
+  width: 50%;
+  border-radius: 50%;
+  height: 2px;
+  margin: 2px auto;
+  color: #f4f4f4;
+  background-color: #1b1b1b;
+}
+
+.card:hover {
+  background-color: #1b1b1b25;
+}
+
+.card:hover .card-front {
+  transform: translateX(-100%);
+}
+
+.card:hover .card-back {
+  transform: translateX(0);
+}
+
+  h1 {
+    margin: 0;
+    font-size: 32px;
+    color: #ffffff;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: absolute;
+    top: 20px;
+    left: 40px;
+  }
+
+  .nav-buttons {
+    display: flex;
+    gap: 15px;
+    margin-left: auto;
+
+  }
+
+  .btn {
+    padding: 10px 20px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent buttons */
+    transition: background-color 0.3s, transform 0.2s;
+  }
+
+  .btn:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+  }
+
+  /* Main Content Sections */
+  main {
+    margin-top: 100px; /* Offset for fixed header */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: calc(100vh - 150px); /* Adjust for header and footer */
+  }
+
+  .welcome-section {
+    text-align: center;
+    padding: 40px 0;
+  }
+
+  .welcome-section h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+  }
+
+  .features-section {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px 0;
+    width: 100%;
+    max-width: 800px;
+  }
+
+  .feature-card {
+    background-color: #ffffff;
+    padding: 20px;
+    width: 300px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: #2c3e50;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .join-section {
+    text-align: center;
+    padding: 40px 0;
+  }
+
+  .join-section h3 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 20px;
+  }
+
+  .join-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .meeting-input {
+    padding: 12px;
+    width: 300px;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .meeting-input:focus {
+    border-color: #3498db;
+  }
+
+  .join-btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: #2c3e50;
+    transition: background-color 0.3s, transform 0.2s;
+  }
+
+  .join-btn:hover {
+    background-color: #3498db;
+    transform: translateY(-2px);
+  }
+
+  .team-section {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px 0;
+    width: 100%;
+    max-width: 800px;
+  }
+
+  .team-card {
+    background-color: #ffffff;
+    padding: 20px;
+    width: 300px;
+    height: 200px; /* Placeholder height for future images */
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+  }
+
+  .team-card:hover {
+    transform: translateY(-5px);
+  }
+
+  /* Footer Styles */
+  footer {
+    width: 100%;
+    padding: 20px;
+    background-color: #2c3e50;
+    color: #ffffff;
+    text-align: center;
+    margin-top: auto;
+  }
+
+  footer p {
+    margin: 0;
+    font-size: 14px;
+  }
+  @media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px 20px;
+  }
+
+  h1 {
+    position: static;
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .nav-buttons {
+    margin-left: 0;
+    align-self: flex-end;
+  }
+
+  main {
+    padding: 10px;
+    margin-top: 140px;
+  }
+
+  .features-section,
+  .team-section {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .feature-card,
+  .team-card {
+    width: 90%;
+  }
+
+  .meeting-input {
+    width: 70%;
+  }
+
+  .join-container {
+    flex-direction: column;
+  }
+
+  .join-btn {
+    width: 70%;
+    padding: 12px;
+  }
+}
+
+    </style>
+    <script>
+      function getCookie(name) {
+        const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+        return match ? decodeURIComponent(match[2]) : null;
+      }
+
+      const name = getCookie("userName");
+      const email = getCookie("userEmail");
+
+      if (name && email) {
+        window.location.href = "home.html";
+      }
+    </script>
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+
+    <header>
+      <h1>PeerSync</h1>
+      <div class="nav-buttons">
+        <a href="signup.html" class="btn">Sign Up</a>
+        <a href="login.html" class="btn">Log In</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="welcome-section">
+        <h2>Welcome to PeerSync - Peer to Peer Video Calling Web App</h2>
+      </section>
+
+      <section class="features-section">
+        <div class="feature-card">Simplified Logins</div>
+        <div class="feature-card">Anonymous Peer to Peer Connect</div>
+      </section>
+      <section class="join-section">
+        <h3>Got a link for anonymous call?</h3>
+        <div class="join-container">
+            <input type="text" placeholder="Paste link here" class="meeting-input" id="meeting-input" />
+            <button class="join-btn" id="join-btn">Join Meeting</button>
+        </div>
+    </section>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+          const joinBtn = document.getElementById("join-btn");
+          const meetingInput = document.getElementById("meeting-input");
+      
+          if (joinBtn) {
+              joinBtn.addEventListener("click", () => {
+                  const roomUrl = meetingInput.value.trim(); // Get the value from the input field
+      
+                  if (roomUrl && roomUrl.includes("room.html?room=")) {
+                      window.location.href = roomUrl;
+                  } else {
+                      alert("❌ Invalid room link.");
+                  }
+              });
+          }
+      });
+      </script>
+     
+      
+    </main>
+
+    <footer>
+      <p>© 2025 PeerSync | This project was developed by student B. Sai Mahendra. Please do not copy or replicate it for at least the next 3 months.</p>
+    </footer>
+    
+  </body>
+  </html>
