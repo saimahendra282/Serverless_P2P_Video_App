@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Room | PeerConnect</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* General styling for the body and layout */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      overflow: hidden;
+      height: 100vh;
+    }
+  
+    header {
+      padding: 1rem;
+      text-align: center;
+      background-color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+      position: relative;
+      z-index: 20;
+    }
+  
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #333;
+    }
+  
+    header #room-status {
+      font-size: 0.9rem;
+      color: #666;
+    }
+  
+    .nav-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+  
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      font-size: 0.9rem;
+      transition: background-color 0.3s;
+    }
+  
+    .btn:hover {
+      background-color: #0056b3;
+    }
+  
+    #share-btn {
+      background-color: #28a745;
+    }
+  
+    #share-btn:hover {
+      background-color: #218838;
+    }
+  
+    /* Video call wrapper styling */
+    .call-wrapper {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 100px); /* Adjust based on header height */
+      background: black;
+      overflow: hidden;
+    }
+  
+    /* Local video (full screen) */
+    #localVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+  
+    /* Remote video (small floating corner) */
+    #remoteVideo {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 180px; /* Adjustable */
+      height: 130px; /* Adjustable */
+      border-radius: 10px;
+      border: 2px solid white;
+      object-fit: cover;
+      z-index: 10;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+      background-color: black; /* Black background if video off */
+    }
+  
+    /* Controls styling */
+    .controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1rem;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 10px 20px;
+      border-radius: 10px;
+      backdrop-filter: blur(5px); /* Optional: for a frosted glass effect */
+    }
+  
+    .controls .btn {
+      background-color: #28a745;
+      padding: 0.75rem;
+      font-size: 1rem;
+      min-width: 50px;
+      text-align: center;
+    }
+  
+    .controls .btn:hover {
+      background-color: #218838;
+    }
+  
+    #leave-room {
+      background-color: #dc3545;
+    }
+  
+    #leave-room:hover {
+      background-color: #c82333;
+    }
+  /* Add this to the existing <style> tag */
+#localVideo, #remoteVideo {
+  transition: all 0.3s ease-in-out; /* Smooth transition for position and size */
+}
+    /* Hide default video grid (if still present) */
+    .video-grid {
+      display: none;
+    }
+    .name-label {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  border-radius: 5px;
+  z-index: 11;
+}
+
+#local-name-label {
+  bottom: 20px;
+  left: 20px;
+}
+
+#remote-name-label {
+  bottom: 160px; /* adjust to sit above the small video */
+  right: 20px;
+}
+
+    /* Responsive Design for Mobile */
+    @media (max-width: 768px) {
+      header {
+        padding: 0.5rem;
+      }
+  
+      header h1 {
+        font-size: 1.2rem;
+      }
+  
+      header #room-status {
+        font-size: 0.8rem;
+      }
+  
+      .call-wrapper {
+        height: calc(100vh - 80px); /* Adjust for smaller header on mobile */
+      }
+  
+      #remoteVideo {
+        width: 120px; /* Smaller size for mobile */
+        height: 90px; /* Smaller size for mobile */
+        bottom: 80px;
+        right: 10px;
+      }
+  
+      .controls {
+        bottom: 10px;
+        padding: 5px 10px;
+        gap: 0.5rem;
+      }
+      #remote-name-label {
+  bottom: 180px; /* adjust to sit above the small video */
+  right: 20px;
+}
+      .controls .btn {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        min-width: 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+    <header>
+        <div class="nav-buttons">
+          <button id="share-btn" class="btn">📤 Share</button> <!-- Share link icon -->
+        </div>
+        <div>
+          <h1 id="room-heading">Loading...</h1>
+          <p id="room-status">Connecting...</p>
+        </div>
+        <div class="nav-buttons">
+          <a href="home.html" class="btn" style="background-color: #dc3545;">🚪</a> <!-- Return home icon -->
+        </div>
+      </header>
+      
+      <main>
+        <h2 id="room-title" style="display: none;">Joining Room...</h2> <!-- Hidden for now -->
+        
+        <div class="call-wrapper">
+          <video id="localVideo" autoplay muted playsinline></video>
+          <div id="local-name-label" class="name-label">You</div>
+
+          <video id="remoteVideo" autoplay playsinline></video>
+          <div id="remote-name-label" class="name-label">Remote</div>
+
+
+        </div>
+      
+        <div class="controls">
+          <button id="toggle-audio" class="btn">🎙️</button>
+          <button id="toggle-video" class="btn">📷</button>
+          <button id="share-screen" class="btn">🖥️</button>
+          <button id="leave-room" class="btn">🚪</button>
+        </div>
+      </main>
+
+      <script>
+        const params = new URLSearchParams(window.location.search);
+        const roomIdFromURL = params.get("room");
+        function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+let roomId = roomIdFromURL || getCookie("lastRoomId");
+const currentUserName = getCookie("userName") || "Guest";
+
+        const headingEl = document.getElementById("room-heading");
+        const statusEl = document.getElementById("room-status");
+        const shareBtn = document.getElementById("share-btn");
+        const localVideo = document.getElementById("localVideo");
+        const remoteVideo = document.getElementById("remoteVideo");
+        const localNameLabel = document.getElementById("local-name-label");
+        const remoteNameLabel = document.getElementById("remote-name-label");
+      
+        let ws;
+        let peerConnection;
+        let localStream;
+        let isAudioEnabled = true;
+        let isVideoEnabled = true;
+        let isCreator = false;
+        let isScreenSharing = false;
+        let originalVideoTrack = null;
+      
+        const config = {
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+        };
+      
+        async function loadRoomDetails() {
+          try {
+            const res = await fetch(`https://deployed-backend-url/room/${roomId}`);
+            const data = await res.json();
+      
+            if (res.ok && data.name) {
+              headingEl.textContent = `${data.name}'s Room`;
+              statusEl.textContent = `Room ID: ${roomId}`;
+              if (data.name === currentUserName) {
+                isCreator = true;
+                document.getElementById("leave-room").textContent = "🛑 End";
+              }
+              document.cookie = `lastRoomId=${roomId}; path=/`;
+            } else {
+              headingEl.textContent = "Room Not Found";
+              statusEl.textContent = "We couldn't load this room.";
+              shareBtn.style.display = "none";
+            }
+          } catch (err) {
+            console.error("Failed to load room:", err);
+            headingEl.textContent = "Error Loading Room";
+            statusEl.textContent = "Please try again later.";
+            shareBtn.style.display = "none";
+          }
+        }
+      
+        loadRoomDetails();
+      
+        shareBtn.addEventListener("click", () => {
+          const inviteLink = `${window.location.origin}/room.html?room=${roomId}`;
+          navigator.clipboard.writeText(inviteLink)
+            .then(() => alert("📋 Invite link copied to clipboard!"))
+            .catch(err => {
+              console.error("Copy failed:", err);
+              alert("Failed to copy link.");
+            });
+        });
+      
+        async function startVideoCall() {
+          localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          localVideo.srcObject = localStream;
+          localNameLabel.textContent = currentUserName;
+      
+          ws = new WebSocket(`wss://deployed-backend -url/ws/${roomId}`);
+      
+          ws.onopen = async () => {
+            console.log("🧠 WebSocket connected");
+            await createPeerConnection();
+      
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            ws.send(JSON.stringify({ type: "offer", offer }));
+            ws.send(JSON.stringify({ type: "username", name: currentUserName }));
+          };
+      
+          ws.onmessage = async (event) => {
+            const msg = JSON.parse(event.data);
+      
+            if (msg.type === "offer") {
+              await createPeerConnection();
+              await peerConnection.setRemoteDescription(new RTCSessionDescription(msg.offer));
+              const answer = await peerConnection.createAnswer();
+              await peerConnection.setLocalDescription(answer);
+              ws.send(JSON.stringify({ type: "answer", answer }));
+            } else if (msg.type === "answer") {
+              await peerConnection.setRemoteDescription(new RTCSessionDescription(msg.answer));
+            } else if (msg.type === "ice-candidate") {
+              await peerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate));
+            } else if (msg.type === "username") {
+              remoteNameLabel.textContent = msg.name || "Remote";
+            }
+          };
+      
+          ws.onclose = () => console.log("🔌 WebSocket disconnected");
+        }
+      
+        async function createPeerConnection() {
+          if (peerConnection) return;
+      
+          peerConnection = new RTCPeerConnection(config);
+      
+          localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+          });
+      
+          peerConnection.ontrack = (e) => {
+            remoteVideo.srcObject = e.streams[0];
+          };
+      
+          peerConnection.onicecandidate = (e) => {
+            if (e.candidate) {
+              ws.send(JSON.stringify({ type: "ice-candidate", candidate: e.candidate }));
+            }
+          };
+        }
+      
+        // Controls
+        document.getElementById("toggle-audio").addEventListener("click", () => {
+          isAudioEnabled = !isAudioEnabled;
+          localStream.getAudioTracks().forEach(track => (track.enabled = isAudioEnabled));
+          document.getElementById("toggle-audio").textContent = isAudioEnabled ? "🎙️" : "🔇";
+        });
+      
+        document.getElementById("toggle-video").addEventListener("click", () => {
+          isVideoEnabled = !isVideoEnabled;
+          localStream.getVideoTracks().forEach(track => (track.enabled = isVideoEnabled));
+          document.getElementById("toggle-video").textContent = isVideoEnabled ? "📷" : "📵";
+        });
+      
+        document.getElementById("leave-room").addEventListener("click", () => {
+          if (isCreator) {
+            alert("Room ended.");
+            document.cookie = "lastRoomId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        } else {
+            alert("You left the room.");
+          }
+      
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.close();
+          }
+      
+          if (peerConnection) {
+            peerConnection.close();
+          }
+      
+          window.location.href = "home.html";
+        });
+      
+        document.getElementById("share-screen").addEventListener("click", async () => {
+          if (!isScreenSharing) {
+            try {
+              const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+              const screenTrack = screenStream.getVideoTracks()[0];
+              originalVideoTrack = localStream.getVideoTracks()[0];
+      
+              localStream.removeTrack(originalVideoTrack);
+              localStream.addTrack(screenTrack);
+              localVideo.srcObject = localStream;
+      
+              const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
+              if (sender) {
+                sender.replaceTrack(screenTrack);
+              }
+      
+              isScreenSharing = true;
+              document.getElementById("share-screen").textContent = "🛑";
+      
+              screenTrack.onended = () => revertToCamera();
+            } catch (err) {
+              console.error("Screen share error:", err);
+              alert("Could not start screen share.");
+            }
+          } else {
+            revertToCamera();
+          }
+        });
+      
+        function revertToCamera() {
+          if (!originalVideoTrack) return;
+      
+          const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
+          if (sender) {
+            sender.replaceTrack(originalVideoTrack);
+          }
+      
+          localStream.removeTrack(localStream.getVideoTracks()[0]);
+          localStream.addTrack(originalVideoTrack);
+          localVideo.srcObject = localStream;
+      
+          isScreenSharing = false;
+          document.getElementById("share-screen").textContent = "🖥️";
+        }
+      
+        startVideoCall();
+      </script>
+      
+  
+</body>
+</html>
