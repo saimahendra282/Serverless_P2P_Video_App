@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home | PeerSync</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: rgba(44, 62, 80, 0.8);
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+ h1 {
+  margin: 0;
+  font-size: 22px;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.center-user {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.user-badge {
+  font-size: 16px;
+  color: #fff;
+  font-weight: 500;
+}
+
+.nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto;
+  margin-right: 60px; /* 👈 push it slightly inward */
+}
+
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  color: #dc3545;
+}
+    .search-bar {
+      margin-top: 100px;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    #user-search {
+      width: 60%;
+      max-width: 600px;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    main {
+      margin-top: 40px;
+      padding: 20px;
+    }
+
+    .action-container {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 30px;
+    }
+
+    .action-btn {
+      padding: 14px 30px;
+      font-size: 16px;
+      background-color: #2c3e50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .action-btn:hover {
+      background-color: #3498db;
+    }
+
+    .user-list-container {
+      margin: 3rem auto;
+      max-width: 800px;
+    }
+
+    .card-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+
+    .user-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+
+    .user-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .call-btn {
+      margin-top: 0.5rem;
+      background: #0b5ed7;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+
+   
+  <header>
+    <h1>PeerSync</h1>
+    <div class="center-user">
+      <span class="user-badge">Hello, User</span>
+    </div>
+    <div class="nav-buttons">
+      <button class="icon-btn" onclick="logout()">↩</button>
+    </div>
+  </header>
+
+   <div class="search-bar">
+    <input
+      type="text"
+      id="user-search"
+      placeholder=" Search users by name or email"
+    />
+  </div>
+
+  <!-- 🚀 Main Actions -->
+  <main>
+    <div class="action-container">
+      <button class="action-btn" id="join-meeting-btn">Join Room</button>
+      <button class="action-btn" id="request-meeting-btn">Create Room</button>
+    </div>
+
+    <div class="user-list-container">
+      <h2>👥 Your Friends</h2>
+      <div id="friendCards" class="card-grid"></div>
+    </div>
+  </main>
+
+  <script src="main.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const nameFromURL = params.get("name");
+    const emailFromURL = params.get("email");
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    if (nameFromURL && emailFromURL) {
+      document.cookie = `userName=${nameFromURL}; path=/`;
+      document.cookie = `userEmail=${emailFromURL}; path=/`;
+
+      if (window.history.replaceState) {
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
+
+    // const storedName = getCookie("userName");
+    // const storedEmail = getCookie("userEmail");
+
+    if (!storedName || !storedEmail) {
+      window.location.href = "index.html";
+    }
+
+    const userBadge = document.querySelector(".user-badge");
+    if (userBadge) {
+      userBadge.textContent = `Hello, ${storedName}`;
+    }
+
+    function clearCookie(name) {
+      document.cookie = name + '=; Max-Age=0; path=/;';
+    }
+
+    function logout() {
+      clearCookie("userName");
+      clearCookie("userEmail");
+      window.location.href = "index.html";
+    }
+
+    // 🎥 Meeting Logic
+    document.addEventListener("DOMContentLoaded", () => {
+      const joinBtn = document.getElementById("join-meeting-btn");
+      if (joinBtn) {
+        joinBtn.addEventListener("click", () => {
+          const roomUrl = prompt("🔗 Paste the invite link:");
+          if (roomUrl && roomUrl.includes("room.html?room=")) {
+            window.location.href = roomUrl;
+          } else {
+            alert("❌ Invalid room link.");
+          }
+        });
+      }
+
+      const requestBtn = document.getElementById("request-meeting-btn");
+      if (requestBtn) {
+        requestBtn.addEventListener("click", async () => {
+          const roomId = crypto.randomUUID();
+          const userName = storedName || "Anonymous";
+
+          try {
+            const res = await fetch("backend-deployed-url/create-room", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ room_id: roomId, name: userName }),
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+              document.cookie = `lastRoomId=${roomId}; path=/`;
+              alert(`✅ Room created!\nInvite link: ${window.location.origin}/room.html?room=${roomId}`);
+              window.location.href = `room.html?room=${roomId}`;
+            } else {
+              alert(data.message || "Failed to create room.");
+            }
+          } catch (err) {
+            console.error("Error creating room:", err);
+            alert("Error creating room.");
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
